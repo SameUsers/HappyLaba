@@ -7,7 +7,6 @@ from functools import lru_cache
 
 class AppConfig(BaseSettings):
     tcp: TCPConfig = Field(default_factory=TCPConfig)
-
     model_config = SettingsConfigDict(
         env_file=Path(Path(__file__).resolve().parents[2] / '.env'),
         env_file_encoding='utf-8',

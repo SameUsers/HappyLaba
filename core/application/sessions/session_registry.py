@@ -1,30 +1,33 @@
-from core.infrastructure.network.tcp.session import TCPSession
-
+from core.application.sessions.managed_sessions import ManagedSession
+import asyncio
 
 class SessionRegistry:
     def __init__(self) -> None:
-        self._storage: dict[str, TCPSession] = {}
+        self._storage: dict[str, ManagedSession] = {}
+        self._lock = asyncio.Lock()
 
 
-    def add(self, session: TCPSession) -> None:
-        if session.id in self._storage:
-            raise ValueError(
-                f"Session '{session.id}' already registered."
-            )
-        self._storage[session.id] = session
+    async def add(self, managed_session: ManagedSession) -> None:
+        async with self._lock:
+            if managed_session.id in self._storage:
+                raise ValueError(f"Session '{managed_session.id}' already registered.")
+            self._storage[managed_session.id] = managed_session
 
 
-    def delete(self, session: TCPSession) -> None:
-        if session.id not in self._storage:
-            raise ValueError(
-                f"Session '{session.id}' not found."
-            )
-        del self._storage[session.id]
+    async def delete(self, managed_session: ManagedSession) -> None:
+        async with self._lock:
+            if managed_session.id in self._storage:
+                self._storage.pop(managed_session.id)
 
 
-    def get(self, session_id: str) -> TCPSession:
-        if session_id not in self._storage:
-            raise ValueError(
-                f"Session '{session_id}' not found."
-            )
-        return self._storage[session_id]
+    async def get(self, session_id: str) -> ManagedSession:
+        async with self._lock:
+            session = self._storage.get(session_id)
+            if session is None:
+                raise KeyError(f"Session '{session_id}' not found.")
+            return session
+
+
+    async def all(self) -> list[ManagedSession]:
+        async with self._lock:
+            return list(self._storage.values())

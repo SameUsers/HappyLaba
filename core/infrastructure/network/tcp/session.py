@@ -1,6 +1,4 @@
 import asyncio
-
-from core.common.generate_id import generate_uuid
 from core.config.tcp import TCPSessionConfig
 from core.infrastructure.network.tcp.exception import (
     InvalidPeerInfo,
@@ -15,23 +13,25 @@ class TCPSession:
         writer: asyncio.StreamWriter,
         config: TCPSessionConfig,
     ) -> None:
-        self._id = generate_uuid()
         self._reader = reader
         self._writer = writer
         self._read_size = config.read_size
-
         peer = self._writer.get_extra_info("peername")
         if peer is None:
             raise InvalidPeerInfo("Remote peer information is unavailable.")
-
         self._host, self._port = peer
 
 
     async def run(self) -> None:
         try:
             await self._receive_loop()
+        except asyncio.CancelledError:
+            raise
         finally:
-            await self._close()
+            if self._writer.is_closing():#Нам не нужно повторно делать запрос на закрытие сессии если оный уже был
+                pass
+            else:
+                await self._close()#Ну а если не был то мы его естественно делаем
 
 
     async def _receive_loop(self) -> None:
@@ -39,17 +39,14 @@ class TCPSession:
             while True:
                 chunk = await self._reader.read(self.read_size)
                 if not chunk:
-                    raise self._remote_close_error()
-                # TODO: Framer.feed(chunk)
-
+                    break
         except asyncio.CancelledError:
             raise
-
         except ConnectionResetError as exc:
             raise self._remote_close_error() from exc
 
 
-    async def _close(self) -> None:
+    async def _close(self):
         if self._writer.is_closing():
             return
         self._writer.close()
@@ -58,13 +55,8 @@ class TCPSession:
 
     def _remote_close_error(self) -> SessionRemoteClose:
         return SessionRemoteClose(
-            f"Session '{self.id}' was closed by remote peer."
+            f"Session {self._host}:{self._port} closed by remote peer"
         )
-
-
-    @property
-    def id(self) -> str:
-        return self._id
 
 
     @property

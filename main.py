@@ -1,11 +1,22 @@
-from bootstrap import AppBuilder
 import asyncio
+from bootstrap import AppBuilder
 
+
+async def close(server):
+    r = await asyncio.to_thread(input, 'Close type: ')
+    print(f"Received: {r}")
+    await server.stop()
+    print("Server closed")
 
 async def main():
-    app_builder = AppBuilder()
-    app = app_builder.build_app()
-    await app.start()
+    server = AppBuilder.build_app()
 
-if __name__ == '__main__':
-    asyncio.run(main())
+    asyncio.create_task(server.start())
+    await close(server)  # просто ждём ввод
+
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\nShutting down...")
