@@ -1,6 +1,6 @@
 import asyncio
 
-from core.common import generate_uuid
+from core.common.generate_id import generate_uuid
 from core.config.tcp import TCPSessionConfig
 from core.infrastructure.network.tcp.exception import (
     InvalidPeerInfo,

@@ -1,15 +1,15 @@
 import asyncio
 
-from core.application import SessionManager
 from core.infrastructure.network.tcp.session import TCPSession
-from core.config.tcp import TCPServerCongig, TCPSessionConfig
+from core.application.sessions.session_manager import SessionManager
+from core.config.tcp import TCPServerConfig, TCPSessionConfig
 
 
 class TCPServer:
     def __init__(
         self,
         session_manager: SessionManager,
-        server_config: TCPServerCongig,
+        server_config: TCPServerConfig,
         session_config: TCPSessionConfig
     ) -> None:
         self._server: asyncio.Server | None = None
@@ -62,7 +62,7 @@ class TCPServer:
     def port(self)->int:
         return self._config.port
 
-    
+
     @property
     def session_manager(self)->SessionManager:
         return self._session_manager

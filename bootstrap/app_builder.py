@@ -1,4 +1,4 @@
-from core.config.config import load_config
+from core.config import load_config
 from core.infrastructure.network.tcp.server import TCPServer
 from core.application.sessions.session_manager import SessionManager
 from core.application.sessions.session_registry import SessionRegistry

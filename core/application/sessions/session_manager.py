@@ -1,6 +1,6 @@
 from core.infrastructure.network.tcp.exception import SessionRemoteClose
 from core.infrastructure.network.tcp.session import TCPSession
-from .session_registry import SessionRegistry
+from core.application.sessions.session_registry import SessionRegistry
 
 
 class SessionManager:

@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 
 
-class TCPServerCongig(BaseModel):
+class TCPServerConfig(BaseModel):
     host: str = '127.0.0.1'
     port: int = 5000
 
@@ -12,5 +12,5 @@ class TCPSessionConfig(BaseModel):
 
 
 class TCPConfig(BaseModel):
-    server: TCPServerCongig = Field(default_factory=TCPServerCongig)
+    server: TCPServerConfig = Field(default_factory=TCPServerConfig)
     session: TCPSessionConfig = Field(default_factory=TCPSessionConfig)
