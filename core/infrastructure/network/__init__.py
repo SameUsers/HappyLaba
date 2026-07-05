@@ -1,4 +1,4 @@
-from .tcp import TCPServer, TCPSession
+from core.infrastructure.network.tcp import TCPServer, TCPSession
 
 __all__ = ['TCPServer',
            'TCPSession']
