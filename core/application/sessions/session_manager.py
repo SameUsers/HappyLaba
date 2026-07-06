@@ -21,9 +21,9 @@ class SessionManager:
             session.port,
         )
         managed = ManagedSession(session=session)
-        task = asyncio.create_task(self._run(managed))
+        self._registry.add(managed)
+        task = asyncio.create_task(self._run(managed))#Пусть будет как инвариант обьекта, ХЗ
         managed.task = task
-        await self._registry.add(managed)
         logger.debug(
             "Managed session {} registered",
             managed.id,
@@ -62,7 +62,7 @@ class SessionManager:
                 "Removing session {} from registry",
                 managed.id,
             )
-            await self._registry.delete(managed)
+            self._registry.delete(managed)
             logger.debug(
                 "Session {} cleanup completed",
                 managed.id,
@@ -71,7 +71,7 @@ class SessionManager:
     async def shutdown(self) -> None:
         logger.info("Session manager shutdown started")
         async with self._lock:
-            sessions = await self._registry.all()
+            sessions = self._registry.all()
             tasks = [s.task for s in sessions if s.task]
         logger.info(
             "Cancelling {} active session(s)",
