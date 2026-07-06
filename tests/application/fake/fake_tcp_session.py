@@ -6,5 +6,5 @@ class FakeTCPSession:
         self.host = '127.0.0.1'
         self.port = 8000
     
-    def run(self)->str:
+    async def run(self)->str:
         return 'ok'
