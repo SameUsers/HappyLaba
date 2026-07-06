@@ -1,7 +1,7 @@
 import asyncio
 from core.application.sessions.session_manager import SessionManager
 from core.config.tcp import TCPServerConfig, TCPSessionConfig
-from core.infrastructure.network.tcp.session import TCPSession
+from core.application.sessions.factories.session_factory import SessionFactory
 from loguru import logger
 
 
@@ -28,11 +28,9 @@ class TCPServer:
         reader: asyncio.StreamReader,
         writer: asyncio.StreamWriter,
     ) -> None:
-        session = TCPSession(
-            reader=reader,
-            writer=writer,
-            config=self._session_config,
-        )
+        session = SessionFactory.create_session(reader=reader,
+                                                writer=writer,
+                                                config=self._session_config)
         logger.info(
             "Session created for peer {}:{}",
             session.host,
