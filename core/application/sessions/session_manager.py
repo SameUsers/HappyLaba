@@ -55,10 +55,10 @@ class SessionManager:
             session.port,
         )
 
-        managed = ManagedSession(session=session)#Тут обьект без задачи
+        managed = ManagedSession(session=session)
         self._registry.add(managed)
         task = asyncio.create_task(self._run(managed))
-        managed.task = task#Тут я ему присваиваю задача
+        managed.task = task
 
         logger.debug(
             "Managed session {} registered",
