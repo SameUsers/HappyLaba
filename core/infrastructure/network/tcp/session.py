@@ -153,6 +153,7 @@ class TCPSession:
         try:
             while True:
                 chunk = await self._reader.read(self.read_size)
+                logger.warning(chunk)
                 if not chunk:
                     raise SessionRemoteClose
                 logger.trace(
