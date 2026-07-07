@@ -17,7 +17,6 @@ from core.infrastructure.network.tcp.exception import SessionRemoteClose
 
 class TestSessionManager:
 
-    @pytest.mark.asyncio
     async def test_on_connect(
         self,
         fake_session_manager: SessionManager,
@@ -48,7 +47,7 @@ class TestSessionManager:
                 side_effect=fake_create_task,
             ) as create_task,
         ):
-            await fake_session_manager.on_connect(session)
+            fake_session_manager.on_connect(session)
 
         managed_cls.assert_called_once_with(session=session)
         registry.add.assert_called_once_with(managed)
