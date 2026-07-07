@@ -1,16 +1,40 @@
-import asyncio
-
 from loguru import logger
 
 from core.application.sessions.managed_sessions import ManagedSession
 
 
 class SessionRegistry:
+    """
+    Хранит информацию об активных управляемых сессиях.
+
+    Ответственность:
+    - регистрация новых сессий;
+    - удаление завершенных сессий;
+    - получение сессии по идентификатору;
+    - предоставление списка всех активных сессий.
+
+    Registry является источником текущего состояния активных
+    сессий и не управляет их жизненным циклом.
+    """
     def __init__(self) -> None:
+        """
+        Инициализирует пустой реестр активных сессий.
+        """
         self._storage: dict[str, ManagedSession] = {}
         logger.debug("SessionRegistry initialized")
 
     def add(self, managed_session: ManagedSession) -> None:
+        """
+        Регистрирует новую управляемую сессию.
+
+        Args:
+            managed_session:
+                Объект сессии, который необходимо добавить в реестр.
+
+        Raises:
+            ValueError:
+                Если сессия с таким идентификатором уже зарегистрирована.
+        """
         if managed_session.id in self._storage:
             logger.error(
                 "Attempt to register duplicate session {}",
@@ -27,6 +51,16 @@ class SessionRegistry:
         )
 
     def delete(self, managed_session: ManagedSession) -> None:
+        """
+        Удаляет управляемую сессию из реестра.
+
+        Если сессия отсутствует в реестре, операция завершается
+        без ошибки.
+
+        Args:
+            managed_session:
+                Объект сессии, который необходимо удалить.
+        """
         if managed_session.id not in self._storage:
             logger.warning(
                 "Attempt to remove unknown session {}",
@@ -42,6 +76,21 @@ class SessionRegistry:
         )
 
     def get(self, session_id: str) -> ManagedSession:
+        """
+        Возвращает активную сессию по идентификатору.
+
+        Args:
+            session_id:
+                Уникальный идентификатор сессии.
+
+        Returns:
+            Найденный объект управляемой сессии.
+
+        Raises:
+            KeyError:
+                Если сессия с указанным идентификатором отсутствует
+                в реестре.
+        """
         session = self._storage.get(session_id)
         if session is None:
             logger.error(
@@ -59,6 +108,12 @@ class SessionRegistry:
         return session
 
     def all(self) -> list[ManagedSession]:
+        """
+        Возвращает список всех зарегистрированных сессий.
+
+        Returns:
+            Список активных управляемых сессий.
+        """
         logger.debug(
             "Registry snapshot requested. Active sessions: {}",
             len(self._storage),
