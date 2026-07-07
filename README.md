@@ -1,30 +1,35 @@
-# HL7 Analyzer Server (Production)
+# Happy Laba
 
-This repository contains the production architecture of the HL7 Analyzer Server.
-The project is focused on building a reliable, asynchronous HL7 TCP server with a clean, extensible architecture suitable for production deployments.
+Асинхронный TCP-сервер для интеграции лабораторного оборудования.
 
-## Features
+Проект предназначен для приема, обработки и передачи данных от внешних устройств с возможностью дальнейшего расширения поддержки различных лабораторных протоколов.
 
-### ✅ Implemented
+## Поддерживаемое оборудование
 
-- Asynchronous TCP server built on asyncio
-- Session lifecycle management
-- UUID-based session registry
-- Connection validation
-- Transport-level exception handling
-- Clean layered architecture
-- Dependency injection via AppBuilder
-- Configurable server and session settings
-- Async task management
-- Structured logging
-- Graceful shutdown
+На текущем этапе проект развивается в направлении интеграции со следующим оборудованием:
 
-### 🚧 In Progress
+- Urit 5160Vet
+- Accenty M320
+- Seamaty SMT-120VP
 
-- HL7 message framing
-- HL7 parser
-- Unit and integration tests
+## О проекте
 
-## Current Sprint
+Happy Laba — это open source проект, целью которого является создание универсального слоя интеграции между лабораторным оборудованием и информационными системами.
 
-The current sprint focuses on HL7 message framing.
+Проект развивается поэтапно: от базовой серверной инфраструктуры к полноценной платформе для обработки лабораторных данных, поддержки различных протоколов и дальнейшего расширения функциональности.
+
+Если проект показался вам интересным, вы можете следить за его развитием через репозиторий, создавать Issues, предлагать улучшения или участвовать в разработке.
+
+## Текущий статус
+
+Текущая версия: 0.0.1
+
+На данный момент реализована базовая серверная инфраструктура:
+
+- асинхронный TCP-сервер на базе asyncio;
+- прием входящих TCP-подключений;
+- управление жизненным циклом сессий;
+- хранение активных подключений;
+- корректное завершение работы сервера и активных соединений.
+
+Подробная история изменений публикуется в [CHANGELOG.md](CHANGELOG.md).
