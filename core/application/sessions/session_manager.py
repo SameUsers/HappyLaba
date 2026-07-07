@@ -37,7 +37,7 @@ class SessionManager:
         logger.debug("SessionManager initialized")
 
 
-    async def on_connect(self, session: TCPSession) -> None:
+    def on_connect(self, session: TCPSession) -> None:
         """
         Регистрирует новую TCP-сессию и запускает управление её жизненным циклом.
 

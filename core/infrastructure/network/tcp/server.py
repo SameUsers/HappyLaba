@@ -84,7 +84,7 @@ class TCPServer:
             session.port,
         )
 
-        await self._session_manager.on_connect(session)
+        self._session_manager.on_connect(session)
 
     async def start(self) -> None:
         """
