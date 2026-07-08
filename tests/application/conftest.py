@@ -6,7 +6,7 @@ from core.application.sessions.session_manager import SessionManager
 
 
 @pytest.fixture
-def session_registry()->SessionRegistry:
+def session_registry() -> SessionRegistry:
     """
     Фикстура для возврата обьекта класса SessionRegistry
     """
@@ -14,12 +14,12 @@ def session_registry()->SessionRegistry:
 
 
 @pytest.fixture
-def fake_tcp_session()->FakeTCPSession:
+def fake_tcp_session() -> FakeTCPSession:
     return FakeTCPSession()
 
 
 @pytest.fixture
-def fake_session_context(fake_tcp_session)->ManagedSession:
+def fake_session_context(fake_tcp_session) -> ManagedSession:
     return ManagedSession(session=fake_tcp_session)
 
 

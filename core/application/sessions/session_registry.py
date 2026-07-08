@@ -16,6 +16,7 @@ class SessionRegistry:
     Registry является источником текущего состояния активных
     сессий и не управляет их жизненным циклом.
     """
+
     def __init__(self) -> None:
         """
         Инициализирует пустой реестр активных сессий.
@@ -40,9 +41,7 @@ class SessionRegistry:
                 "Attempt to register duplicate session {}",
                 managed_session.id,
             )
-            raise ValueError(
-                f"Session '{managed_session.id}' already registered."
-            )
+            raise ValueError(f"Session '{managed_session.id}' already registered.")
         self._storage[managed_session.id] = managed_session
         logger.info(
             "Session {} registered. Active sessions: {}",
@@ -97,9 +96,7 @@ class SessionRegistry:
                 "Session {} was not found in registry",
                 session_id,
             )
-            raise KeyError(
-                f"Session '{session_id}' not found."
-            )
+            raise KeyError(f"Session '{session_id}' not found.")
 
         logger.debug(
             "Session {} retrieved from registry",

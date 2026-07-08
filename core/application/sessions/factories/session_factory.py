@@ -2,6 +2,7 @@ from core.infrastructure.network.tcp.session import TCPSession
 from core.config.tcp import TCPSessionConfig
 import asyncio
 
+
 class SessionFactory:
     """
     Фабрика для создания объектов TCP-сессий.
@@ -20,9 +21,11 @@ class SessionFactory:
     """
 
     @staticmethod
-    def create_session(reader: asyncio.StreamReader, 
-                       writer: asyncio.StreamWriter,
-                       config: TCPSessionConfig) -> TCPSession:
+    def create_session(
+        reader: asyncio.StreamReader,
+        writer: asyncio.StreamWriter,
+        config: TCPSessionConfig,
+    ) -> TCPSession:
         """
         Создает и возвращает новый экземпляр TCP-сессии.
             Args:
@@ -42,5 +45,4 @@ class SessionFactory:
             reader=reader,
             writer=writer,
             config=config,
-
         )
