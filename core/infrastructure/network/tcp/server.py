@@ -54,7 +54,7 @@ class TCPServer:
             self._config.port,
         )
 
-    async def _handle_connection(
+    def _handle_connection(
         self,
         reader: asyncio.StreamReader,
         writer: asyncio.StreamWriter,
