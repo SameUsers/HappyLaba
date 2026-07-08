@@ -55,7 +55,7 @@ class TCPSession:
         self._read_size = config.read_size
 
         peer = self._writer.get_extra_info("peername")
-        if peer is None:
+        if peer is None or not isinstance(peer, tuple):
             logger.error("Failed to retrieve remote peer information")
             raise InvalidPeerInfo("Remote peer information is unavailable.")
 
