@@ -133,26 +133,28 @@ sequenceDiagram
 # Получение данных
 
 В текущей реализации входящие данные проходят следующий путь:
-Внешнее устройство
-        |
-        v
-TCP соединение
-        |
-        v
-TCPServer
-        |
-        v
-TCPSession
-        |
-        v
-Logger
 
+```mermaid
+flowchart TD
+
+    Device["Внешнее устройство"]
+    Connection["TCP-соединение"]
+    Server["TCPServer"]
+    Session["TCPSession"]
+    Logger["Logger"]
+
+    Device --> Connection
+    Connection --> Server
+    Server --> Session
+    Session -->|Полученные байты| Logger
+
+```
 После получения данных TCPSession считывает байты из TCP-потока и выводит их в лог приложения.
 
 Пример:
-2026-07-08 12:00:00 | WARNING |
-b'example message bytes'
-
+```text
+2026-07-08 12:00:00 | WARNING |b'example message bytes'
+```
 ---
 
 # Ограничения текущей версии
