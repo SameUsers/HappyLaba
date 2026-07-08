@@ -29,7 +29,7 @@ class AppBuilder:
             session_config=app_config.tcp.session,
             session_manager=app_session_manager,
         )
-        
+
         logger.info(
             "Application initialized successfully. TCP server configured for {}:{}",
             app_config.tcp.server.host,

@@ -6,6 +6,9 @@ dist/
 wheels/
 *.egg-info
 .env
-
+coverage-report
+.flake8
+.mypy_cache
+.pytest_cache
 # Virtual environments
 .venv

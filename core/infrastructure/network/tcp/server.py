@@ -126,41 +126,28 @@ class TCPServer:
         """
         async with self._lock:
             if self._server is None:
-                logger.warning(
-                    "Stop called but server is not running"
-                )
+                logger.warning("Stop called but server is not running")
                 return
 
-            logger.info(
-                "Shutdown requested for TCP server"
-            )
+            logger.info("Shutdown requested for TCP server")
 
             server = self._server
             self._server = None
 
             server.close()
 
-        logger.debug(
-            "Server socket closed, stopping accept loop"
-        )
+        logger.debug("Server socket closed, stopping accept loop")
 
-        wait_task = asyncio.create_task(server.wait_closed()
-        )
+        wait_task = asyncio.create_task(server.wait_closed())
 
-        shutdown_task = asyncio.create_task(
-            self._session_manager.shutdown()
-        )
+        shutdown_task = asyncio.create_task(self._session_manager.shutdown())
 
-        logger.debug(
-            "Waiting for server and session manager shutdown"
-        )
+        logger.debug("Waiting for server and session manager shutdown")
 
         await wait_task
         await shutdown_task
 
-        logger.info(
-            "TCP server shutdown completed"
-        )
+        logger.info("TCP server shutdown completed")
 
     @property
     def host(self) -> str:
