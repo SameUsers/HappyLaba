@@ -1,0 +1,42 @@
+pycache
+*.py[cod]
+*$py.class
+
+.github
+.git
+.gitignore
+
+.pytest_cache
+.coverage
+htmlcov
+coverage-report
+
+.venv
+venv
+env
+
+tests
+
+.env
+.env.*
+.env.example
+
+CHANGELOG.md
+README.md
+
+# Python build artifacts
+build/
+dist/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile*
+docker-compose*.yml
