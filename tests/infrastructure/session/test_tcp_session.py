@@ -12,7 +12,6 @@ from core.infrastructure.network.tcp.session import TCPSession
 
 class TestTCPSession:
 
-
     def test_should_initialize_session_with_valid_peer_info(
         self,
         session: TCPSession,
@@ -22,7 +21,6 @@ class TestTCPSession:
         assert session.read_size == 4096
 
         session._writer.get_extra_info.assert_called_once_with("peername")
-
 
     @pytest.mark.parametrize(
         "peer",
@@ -49,7 +47,6 @@ class TestTCPSession:
         with pytest.raises(InvalidPeerInfo):
             TCPSession(reader, writer, config)
 
-
     @pytest.mark.asyncio
     async def test_should_run_receive_loop_and_close_session(
         self,
@@ -63,15 +60,12 @@ class TestTCPSession:
         session._receive_loop.assert_awaited_once()
         session._close.assert_awaited_once()
 
-
     @pytest.mark.asyncio
     async def test_should_reraise_cancelled_error_and_close_session(
         self,
         session: TCPSession,
     ) -> None:
-        session._receive_loop = AsyncMock(
-            side_effect=asyncio.CancelledError()
-        )
+        session._receive_loop = AsyncMock(side_effect=asyncio.CancelledError())
         session._close = AsyncMock()
 
         with pytest.raises(asyncio.CancelledError):
@@ -79,15 +73,12 @@ class TestTCPSession:
 
         session._close.assert_awaited_once()
 
-
     @pytest.mark.asyncio
     async def test_should_reraise_session_remote_close_and_close_session(
         self,
         session: TCPSession,
     ) -> None:
-        session._receive_loop = AsyncMock(
-            side_effect=SessionRemoteClose()
-        )
+        session._receive_loop = AsyncMock(side_effect=SessionRemoteClose())
         session._close = AsyncMock()
 
         with pytest.raises(SessionRemoteClose):
@@ -95,22 +86,18 @@ class TestTCPSession:
 
         session._close.assert_awaited_once()
 
-
     @pytest.mark.asyncio
     async def test_should_reraise_unhandled_exception_and_close_session(
         self,
         session: TCPSession,
     ) -> None:
-        session._receive_loop = AsyncMock(
-            side_effect=RuntimeError()
-        )
+        session._receive_loop = AsyncMock(side_effect=RuntimeError())
         session._close = AsyncMock()
 
         with pytest.raises(RuntimeError):
             await session.run()
 
         session._close.assert_awaited_once()
-
 
     @pytest.mark.asyncio
     async def test_should_raise_session_remote_close_when_peer_disconnects(
@@ -124,32 +111,25 @@ class TestTCPSession:
 
         session._reader.read.assert_awaited_once_with(session.read_size)
 
-
     @pytest.mark.asyncio
     async def test_should_reraise_connection_reset_error(
         self,
         session: TCPSession,
     ) -> None:
-        session._reader.read = AsyncMock(
-            side_effect=ConnectionResetError()
-        )
+        session._reader.read = AsyncMock(side_effect=ConnectionResetError())
 
         with pytest.raises(ConnectionResetError):
             await session._receive_loop()
-
 
     @pytest.mark.asyncio
     async def test_should_reraise_cancelled_error_from_receive_loop(
         self,
         session: TCPSession,
     ) -> None:
-        session._reader.read = AsyncMock(
-            side_effect=asyncio.CancelledError()
-        )
+        session._reader.read = AsyncMock(side_effect=asyncio.CancelledError())
 
         with pytest.raises(asyncio.CancelledError):
             await session._receive_loop()
-
 
     @pytest.mark.asyncio
     async def test_should_close_writer_when_connection_is_open(
@@ -160,7 +140,6 @@ class TestTCPSession:
 
         session._writer.close.assert_called_once()
         session._writer.wait_closed.assert_awaited_once()
-
 
     @pytest.mark.asyncio
     async def test_should_not_close_writer_when_connection_is_already_closing(

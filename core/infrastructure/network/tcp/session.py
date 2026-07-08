@@ -124,7 +124,6 @@ class TCPSession:
         finally:
             await self._close()
 
-
     async def _receive_loop(self) -> None:
         """
         Выполняет цикл приема данных из TCP-потока.

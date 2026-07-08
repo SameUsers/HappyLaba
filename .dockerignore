@@ -7,6 +7,8 @@ pycache
 .gitignore
 
 .pytest_cache
+.mypy_cache
+.pytest_cache
 .coverage
 htmlcov
 coverage-report

@@ -9,5 +9,6 @@ async def main():
     except (KeyboardInterrupt, asyncio.CancelledError):
         await server.stop()
 
+
 if __name__ == "__main__":
     asyncio.run(main())

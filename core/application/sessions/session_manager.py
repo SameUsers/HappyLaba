@@ -22,7 +22,6 @@ class SessionManager:
     но не отвечает за создание и инициализацию TCP-сессий.
     """
 
-
     def __init__(self, registry: SessionRegistry) -> None:
         """
         Инициализирует менеджер сессий.
@@ -35,7 +34,6 @@ class SessionManager:
         self._registry = registry
         self._lock = asyncio.Lock()
         logger.debug("SessionManager initialized")
-
 
     def on_connect(self, session: TCPSession) -> None:
         """
@@ -70,7 +68,6 @@ class SessionManager:
             managed.id,
         )
 
-
     async def _run(self, managed: ManagedSession) -> None:
         """
         Управляет выполнением жизненного цикла сессии.
@@ -81,7 +78,7 @@ class SessionManager:
         Args:
             managed:
                 Полностью инициализированный объект управляемой сессии.
-        
+
         Raises:
             asyncio.CancelledError:
                 Пробрасывается при отмене задачи во время завершения сервера.
@@ -119,7 +116,6 @@ class SessionManager:
                 "Session {} cleanup completed",
                 managed.id,
             )
-
 
     async def shutdown(self) -> None:
         """

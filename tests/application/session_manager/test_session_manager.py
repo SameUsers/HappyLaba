@@ -86,9 +86,7 @@ class TestSessionManager:
         registry = create_autospec(SessionRegistry, instance=True)
 
         managed.session = session
-        session.run = AsyncMock(
-            side_effect=asyncio.CancelledError()
-        )
+        session.run = AsyncMock(side_effect=asyncio.CancelledError())
 
         fake_session_manager._registry = registry
 
@@ -144,9 +142,7 @@ class TestSessionManager:
         registry = create_autospec(SessionRegistry, instance=True)
 
         managed.session = session
-        session.run = AsyncMock(
-            side_effect=SessionRemoteClose()
-        )
+        session.run = AsyncMock(side_effect=SessionRemoteClose())
 
         fake_session_manager._registry = registry
 
@@ -164,9 +160,7 @@ class TestSessionManager:
         session = create_autospec(TCPSession, instance=True)
         registry = create_autospec(SessionRegistry, instance=True)
         managed.session = session
-        session.run = AsyncMock(
-            side_effect=RuntimeError("boom")
-        )
+        session.run = AsyncMock(side_effect=RuntimeError("boom"))
         fake_session_manager._registry = registry
         await fake_session_manager._run(managed)
         session.run.assert_awaited_once()
