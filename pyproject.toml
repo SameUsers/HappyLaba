@@ -1,14 +1,19 @@
 [project]
 name = "HappyLaba"
 version = "0.0.1"
-description = "Add your description here"
+description = "Open-source asynchronous TCP server for laboratory analyzers."
 readme = "README.md"
 requires-python = ">=3.12"
+
 dependencies = [
+    "loguru>=0.7.3",
     "pydantic>=2.13.4",
     "pydantic-settings>=2.14.2",
-    "loguru>=0.7.3",
 ]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 packages = ["core"]
@@ -19,11 +24,7 @@ pythonpath = ["."]
 
 [dependency-groups]
 dev = [
-    "pydantic>=2.13.4",
-    "pydantic-settings>=2.14.2",
-    "loguru>=0.7.3",
-    "pydantic>=2.13.4",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
-    "pytest_cov>7.0.0"
+    "pytest-cov>=7.0.0",
 ]
