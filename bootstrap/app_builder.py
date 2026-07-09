@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from loguru import logger
 
 from core.config import load_config
@@ -9,31 +11,68 @@ from core.application.sessions.session_registry import SessionRegistry
 class AppBuilder:
 
     @staticmethod
-    def build_app() -> TCPServer:
-        logger.info("Starting application initialization")
-
-        logger.debug("Loading application configuration")
-        app_config = load_config()
-
+    @lru_cache(maxsize=1)
+    def _create_session_manager() -> SessionManager:
         logger.debug("Creating session registry")
+
         app_session_registry = SessionRegistry()
 
         logger.debug("Creating session manager")
-        app_session_manager = SessionManager(
+
+        return SessionManager(
             registry=app_session_registry,
         )
 
-        logger.debug("Creating TCP server")
-        server = TCPServer(
-            server_config=app_config.tcp.server,
-            session_config=app_config.tcp.session,
-            session_manager=app_session_manager,
-        )
+    @staticmethod
+    def build_app() -> list[TCPServer]:
+        logger.info("Starting application initialization")
+
+        logger.debug("Loading application configuration")
+
+        app_config = load_config()
+
+        app_session_manager = AppBuilder._create_session_manager()
+
+        channels: list[TCPServer] = []
+        ports: set[int] = set()
+
+        for device_config in app_config.devices_config:
+            port = device_config.device_channel.port
+            host = device_config.device_channel.host
+
+            logger.debug(
+                "Creating TCP channel for device type '{}' on {}:{}",
+                device_config.device_type,
+                host,
+                port,
+            )
+
+            if port in ports:
+                raise RuntimeError(
+                    f"Port {port} already configured for another device"
+                )
+
+            ports.add(port)
+
+            server = TCPServer(
+                channel_type=device_config.device_type,
+                server_config=device_config.device_channel,
+                session_config=device_config.device_session,
+                session_manager=app_session_manager,
+            )
+
+            logger.info(
+                "TCP channel configured for device '{}' on {}:{}",
+                device_config.device_type,
+                host,
+                port,
+            )
+
+            channels.append(server)
 
         logger.info(
-            "Application initialized successfully. TCP server configured for {}:{}",
-            app_config.tcp.server.host,
-            app_config.tcp.server.port,
+            "Application initialized successfully. Configured TCP channels: {}",
+            len(channels),
         )
 
-        return server
+        return channels

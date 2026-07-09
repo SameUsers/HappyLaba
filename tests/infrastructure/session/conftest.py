@@ -6,6 +6,7 @@ from core.infrastructure.network.tcp.session import TCPSession
 @pytest.fixture
 def session() -> TCPSession:
     reader = AsyncMock()
+    framer = MagicMock()
 
     writer = MagicMock()
     writer.get_extra_info.return_value = ("127.0.0.1", 8000)
@@ -16,6 +17,7 @@ def session() -> TCPSession:
     config.read_size = 4096
 
     return TCPSession(
+        framer=framer,
         reader=reader,
         writer=writer,
         config=config,

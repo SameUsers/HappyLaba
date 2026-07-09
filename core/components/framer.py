@@ -67,19 +67,13 @@ class HL7Framer:
         end = data.find(self.END_BYTES)
         if start != -1 and end != -1:
             logger.debug("Complete MLLP message received.")
-            return MLLPMessage(
-                message=data[start + len(self.START_BYTES):end]
-            )
+            return MLLPMessage(message=data[start + len(self.START_BYTES) : end])
         if start != -1:
             logger.debug("MLLP message start detected.")
             self._reset()
             self._state = FramerState.RECEIVING
-            self._buffer.extend(
-                data[start + len(self.START_BYTES):]
-            )
-            self._timer_task = asyncio.create_task(
-                self._timeout()
-            )
+            self._buffer.extend(data[start + len(self.START_BYTES) :])
+            self._timer_task = asyncio.create_task(self._timeout())
             logger.debug(
                 "Receiving started. Buffered {} bytes.",
                 len(self._buffer),
@@ -112,7 +106,7 @@ class HL7Framer:
         try:
             await asyncio.sleep(self._receive_timeout)
             logger.error(
-                "Message receive timeout exceeded ({} seconds). Resetting framer state.",
+                "Message receive timeout exceeded ({} seconds). Resetting framer.",
                 self._receive_timeout,
             )
             self._reset()

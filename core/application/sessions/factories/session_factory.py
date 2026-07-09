@@ -1,6 +1,6 @@
 from core.infrastructure.network.tcp.session import TCPSession
 from core.components.framer import HL7Framer
-from core.config.tcp import TCPSessionConfig
+from core.config.tcp import DeviceSessionConfig
 import asyncio
 
 
@@ -25,7 +25,7 @@ class SessionFactory:
     def create_session(
         reader: asyncio.StreamReader,
         writer: asyncio.StreamWriter,
-        config: TCPSessionConfig,
+        config: DeviceSessionConfig,
     ) -> TCPSession:
         """
         Создает и возвращает новый экземпляр TCP-сессии.
@@ -43,7 +43,7 @@ class SessionFactory:
                 Инициализированный объект TCPSession.
         """
         return TCPSession(
-            framer=HL7Framer(),#На каждую сессию создаётся свой экземпляр
+            framer=HL7Framer(),  # На каждую сессию создаётся свой экземпляр
             reader=reader,
             writer=writer,
             config=config,

@@ -1,6 +1,6 @@
 from loguru import logger
 
-from core.application.sessions.managed_sessions import ManagedSession
+from core.application.sessions.session_context import SessionContext
 
 
 class SessionRegistry:
@@ -21,10 +21,10 @@ class SessionRegistry:
         """
         Инициализирует пустой реестр активных сессий.
         """
-        self._storage: dict[str, ManagedSession] = {}
+        self._storage: dict[str, SessionContext] = {}
         logger.debug("SessionRegistry initialized")
 
-    def add(self, managed_session: ManagedSession) -> None:
+    def add(self, managed_session: SessionContext) -> None:
         """
         Регистрирует новую управляемую сессию.
 
@@ -49,7 +49,7 @@ class SessionRegistry:
             len(self._storage),
         )
 
-    def delete(self, managed_session: ManagedSession) -> None:
+    def delete(self, managed_session: SessionContext) -> None:
         """
         Удаляет управляемую сессию из реестра.
 
@@ -74,7 +74,7 @@ class SessionRegistry:
             len(self._storage),
         )
 
-    def get(self, session_id: str) -> ManagedSession:
+    def get(self, session_id: str) -> SessionContext:
         """
         Возвращает активную сессию по идентификатору.
 
@@ -104,7 +104,7 @@ class SessionRegistry:
         )
         return session
 
-    def all(self) -> list[ManagedSession]:
+    def all(self) -> list[SessionContext]:
         """
         Возвращает список всех зарегистрированных сессий.
 
