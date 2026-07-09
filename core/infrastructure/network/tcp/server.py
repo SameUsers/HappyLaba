@@ -7,19 +7,19 @@ from core.application.sessions.session_manager import SessionManager
 from core.config.tcp import DeviceChannelConfig, DeviceSessionConfig
 
 
-class TCPServer:
+class TCPChannel:
     """
     Принимает входящие TCP-соединения и передает управление
     созданными сессиями менеджеру сессий.
 
     Ответственность:
-    - запуск и остановка TCP-сервера;
+    - запуск и остановка TCP-канала;
     - прием новых клиентских подключений;
     - создание объектов TCP-сессий через фабрику;
     - передача созданных сессий в SessionManager;
     - координация завершения сетевого слоя.
 
-    TCPServer отвечает за транспортный уровень и не управляет
+    TCPChannel отвечает только за транспортный уровень и не управляет
     жизненным циклом отдельных сессий.
     """
 
@@ -31,14 +31,14 @@ class TCPServer:
         session_config: DeviceSessionConfig,
     ) -> None:
         """
-        Инициализирует TCP-сервер.
+        Инициализирует TCP-канал.
 
         Args:
             session_manager:
-                Менеджер, отвечающий за жизненный цикл активных сессий.
+                Менеджер жизненного цикла активных сессий.
 
             server_config:
-                Конфигурация TCP-канала устройства.
+                Конфигурация TCP-канала.
 
             session_config:
                 Конфигурация создаваемых TCP-сессий.
@@ -49,11 +49,47 @@ class TCPServer:
         self._session_config = session_config
         self._session_manager = session_manager
         self._lock = asyncio.Lock()
+
         logger.debug(
             "TCP channel '{}' initialized on {}:{}",
             self._channel_type,
-            self._config.host,
-            self._config.port,
+            self.host,
+            self.port,
+        )
+
+    async def _create_server(self) -> None:
+        """
+        Создает и привязывает TCP-сервер к сокету.
+        """
+        try:
+            self._server = await asyncio.start_server(
+                self._handle_connection,
+                host=self.host,
+                port=self.port,
+            )
+        except OSError:
+            logger.exception(
+                "Failed to start TCP channel '{}' on {}:{}",
+                self._channel_type,
+                self.host,
+                self.port,
+            )
+            raise
+
+    async def _close_server(self, server: asyncio.Server) -> None:
+        """
+        Выполняет корректное завершение TCP-сервера.
+        """
+        server.close()
+
+        logger.debug(
+            "Closing TCP channel '{}'",
+            self._channel_type,
+        )
+
+        await asyncio.gather(
+            server.wait_closed(),
+            self._session_manager.shutdown(channel_type=self._channel_type),
         )
 
     async def _handle_connection(
@@ -64,8 +100,8 @@ class TCPServer:
         """
         Обрабатывает новое входящее TCP-подключение.
 
-        Создает объект TCP-сессии через фабрику и передает
-        его SessionManager для дальнейшего управления жизненным циклом.
+        Создает TCP-сессию через фабрику и передает
+        ее менеджеру сессий.
         """
         session = SessionFactory.create_session(
             reader=reader,
@@ -79,6 +115,7 @@ class TCPServer:
             session.host,
             session.port,
         )
+
         self._session_manager.on_connect(session, self._channel_type)
 
     async def start(self) -> None:
@@ -88,21 +125,8 @@ class TCPServer:
         async with self._lock:
             if self._server is not None:
                 raise RuntimeError("TCP channel already running.")
-            try:
-                self._server = await asyncio.start_server(
-                    self._handle_connection,
-                    host=self.host,
-                    port=self.port,
-                )
-            except OSError as exc:
-                logger.error(
-                    "Failed to start TCP channel '{}' on {}:{} - {}",
-                    self._channel_type,
-                    self.host,
-                    self.port,
-                    exc,
-                )
-                raise
+
+            await self._create_server()
 
         logger.info(
             "TCP channel '{}' started on {}:{}",
@@ -110,19 +134,20 @@ class TCPServer:
             self.host,
             self.port,
         )
+
         try:
             await self._server.serve_forever()
+
         except asyncio.CancelledError:
             logger.debug(
                 "TCP channel '{}' task cancelled",
                 self._channel_type,
             )
             raise
-        except Exception as exc:
-            logger.error(
-                "TCP channel '{}' stopped unexpectedly: {}",
+        except Exception:
+            logger.exception(
+                "TCP channel '{}' stopped unexpectedly",
                 self._channel_type,
-                exc,
             )
             raise
 
@@ -131,7 +156,7 @@ class TCPServer:
         Выполняет корректное завершение TCP-канала.
 
         Прекращает прием новых подключений и завершает
-        активные сессии через SessionManager.
+        связанные сессии.
         """
         async with self._lock:
             if self._server is None:
@@ -140,29 +165,19 @@ class TCPServer:
                     self._channel_type,
                 )
                 return
+
             logger.info(
-                "Shutdown requested for TCP channel '{}'",
+                "Stopping TCP channel '{}'",
                 self._channel_type,
             )
+
             server = self._server
             self._server = None
-            server.close()
-        logger.debug(
-            "TCP channel '{}' socket closed, stopping accept loop",
-            self._channel_type,
-        )
-        wait_task = asyncio.create_task(server.wait_closed())
-        shutdown_task = asyncio.create_task(
-            self._session_manager.shutdown(channel_type=self._channel_type)
-        )
-        logger.debug(
-            "Waiting for TCP channel '{}' and session manager shutdown",
-            self._channel_type,
-        )
-        await wait_task
-        await shutdown_task
+
+        await self._close_server(server)
+
         logger.info(
-            "TCP channel '{}' shutdown completed",
+            "TCP channel '{}' stopped",
             self._channel_type,
         )
 
@@ -173,6 +188,10 @@ class TCPServer:
     @property
     def port(self) -> int:
         return self._config.port
+
+    @property
+    def channel_type(self) -> str:
+        return self._channel_type
 
     @property
     def session_manager(self) -> SessionManager:

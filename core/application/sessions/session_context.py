@@ -1,22 +1,26 @@
-from dataclasses import dataclass, field
 import asyncio
-from core.infrastructure.network.tcp.session import TCPSession
-from core.domain.devices_types import DevicesTypeEnum
+from dataclasses import dataclass, field
+
 from core.common.generate_id import generate_uuid
+from core.domain.devices_types import DevicesTypeEnum
+from core.infrastructure.network.tcp.session import TCPSession
 
 
 @dataclass(slots=True)
 class SessionContext:
     """
-    Представляет TCP-сессию, управляемую SessionManager.
+    Представляет контекст TCP-сессии, управляемой SessionManager.
 
-    Объединяет объект сетевой сессии и связанную с ней
-    фоновую задачу выполнения, позволяя отслеживать полный
-    жизненный цикл активного соединения.
+    Объединяет сетевую сессию, связанную с ней фоновую задачу
+    и служебные данные, необходимые для управления жизненным
+    циклом активного соединения.
 
     Attributes:
+        channel_type:
+            Тип TCP-канала, которому принадлежит сессия.
+
         session:
-            Объект TCP-сессии, отвечающий за работу с соединением.
+            Объект TCP-сессии.
 
         task:
             Фоновая задача asyncio, выполняющая обработку сессии.

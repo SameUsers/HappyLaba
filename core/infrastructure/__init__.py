@@ -1,3 +1,3 @@
-from core.infrastructure.network import TCPServer, TCPSession
+from core.infrastructure.network import TCPChannel, TCPSession
 
-__all__ = ["TCPServer", "TCPSession"]
+__all__ = ["TCPChannel", "TCPSession"]
