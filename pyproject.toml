@@ -1,6 +1,6 @@
 [project]
 name = "HappyLaba"
-version = "0.0.1"
+version = "0.0.2"
 description = "Open-source asynchronous TCP server for laboratory analyzers."
 readme = "README.md"
 requires-python = ">=3.12"
