@@ -1,4 +1,5 @@
 from core.infrastructure.network.tcp.session import TCPSession
+from core.components.framer import HL7Framer
 from core.config.tcp import TCPSessionConfig
 import asyncio
 
@@ -42,6 +43,7 @@ class SessionFactory:
                 Инициализированный объект TCPSession.
         """
         return TCPSession(
+            framer=HL7Framer(),#На каждую сессию создаётся свой экземпляр
             reader=reader,
             writer=writer,
             config=config,
