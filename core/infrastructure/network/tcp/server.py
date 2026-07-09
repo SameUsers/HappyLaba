@@ -7,7 +7,7 @@ from core.application.sessions.session_manager import SessionManager
 from core.config.tcp import DeviceChannelConfig, DeviceSessionConfig
 
 
-class TCPServer:
+class TCPChannel:
     """
     Принимает входящие TCP-соединения и передает управление
     созданными сессиями менеджеру сессий.
@@ -173,6 +173,10 @@ class TCPServer:
     @property
     def port(self) -> int:
         return self._config.port
+    
+    @property
+    def channel_type(self)->str:
+        return self._channel_type
 
     @property
     def session_manager(self) -> SessionManager:

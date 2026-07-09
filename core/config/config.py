@@ -7,7 +7,7 @@ from functools import lru_cache
 
 
 class AppConfig(YamlBaseSettings):
-    devices_config: list[DeviceConfig] = Field(default_factory=DeviceConfig)
+    channel_config: list[DeviceConfig] = Field(default_factory=DeviceConfig)
     model_config = SettingsConfigDict(
         yaml_file=Path(Path(__file__).resolve().parents[2] / "config.yaml"),
     )

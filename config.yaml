@@ -1,4 +1,4 @@
-devices_config:
+channel_config:
 
   - device_type: Urit5160 
     device_channel:
