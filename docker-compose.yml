@@ -1,11 +1,14 @@
-version: '3.9'
+version: "3.9"
 
 services:
   happy-laba:
+    build: .
     image: happy-laba
-    build:
-      context: .
-    env_file:
-      - .env
+
     ports:
+      - "8002:8002"
+      - "8001:8001"
       - "8000:8000"
+
+    volumes:
+      - ./config.yaml:/happy_laba/config.yaml:ro
