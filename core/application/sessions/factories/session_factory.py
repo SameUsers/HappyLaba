@@ -43,7 +43,7 @@ class SessionFactory:
                 Инициализированный объект TCPSession.
         """
         return TCPSession(
-            framer=HL7Framer(),#На каждую сессию создаётся свой экземпляр
+            framer=HL7Framer(),  # На каждую сессию создаётся свой экземпляр
             reader=reader,
             writer=writer,
             config=config,

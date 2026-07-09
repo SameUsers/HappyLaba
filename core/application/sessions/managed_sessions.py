@@ -25,8 +25,8 @@ class ManagedSession:
         id:
             Уникальный идентификатор управляемой сессии.
     """
+
     device_type: DevicesTypeEnum
     session: TCPSession
     task: asyncio.Task | None = None
     id: str = field(default_factory=generate_uuid)
-    

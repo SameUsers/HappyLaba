@@ -17,7 +17,5 @@ async def main():
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
 
-
-
 if __name__ == "__main__":
     asyncio.run(main())

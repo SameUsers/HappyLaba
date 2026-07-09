@@ -158,7 +158,7 @@ class TCPSession:
                     raise SessionRemoteClose
                 message = await self._framer.frame(chunk)
                 if message:
-                    logger.debug('Recieved message {}', message)
+                    logger.debug("Recieved message {}", message)
                 logger.trace(
                     "Received {} bytes from {}:{}",
                     len(chunk),
