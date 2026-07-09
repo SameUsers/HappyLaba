@@ -22,34 +22,37 @@ class SessionRegistry:
         Инициализирует пустой реестр активных сессий.
         """
         self._storage: dict[str, SessionContext] = {}
-        logger.debug("SessionRegistry initialized")
 
-    def add(self, managed_session: SessionContext) -> None:
+        logger.debug("Session registry initialized")
+
+    def add(self, session: SessionContext) -> None:
         """
         Регистрирует новую управляемую сессию.
 
         Args:
-            managed_session:
-                Объект сессии, который необходимо добавить в реестр.
+            session:
+                Контекст сессии.
 
         Raises:
             ValueError:
-                Если сессия с таким идентификатором уже зарегистрирована.
+                Если сессия с таким идентификатором уже существует.
         """
-        if managed_session.id in self._storage:
+        if session.id in self._storage:
             logger.error(
-                "Attempt to register duplicate session {}",
-                managed_session.id,
+                "Session '{}' is already registered",
+                session.id,
             )
-            raise ValueError(f"Session '{managed_session.id}' already registered.")
-        self._storage[managed_session.id] = managed_session
+            raise ValueError(f"Session '{session.id}' already registered.")
+
+        self._storage[session.id] = session
+
         logger.info(
-            "Session {} registered. Active sessions: {}",
-            managed_session.id,
+            "Registered session '{}', active sessions: {}",
+            session.id,
             len(self._storage),
         )
 
-    def delete(self, managed_session: SessionContext) -> None:
+    def delete(self, session: SessionContext) -> None:
         """
         Удаляет управляемую сессию из реестра.
 
@@ -57,20 +60,21 @@ class SessionRegistry:
         без ошибки.
 
         Args:
-            managed_session:
-                Объект сессии, который необходимо удалить.
+            session:
+                Контекст сессии.
         """
-        if managed_session.id not in self._storage:
+        if session.id not in self._storage:
             logger.warning(
-                "Attempt to remove unknown session {}",
-                managed_session.id,
+                "Attempted to remove unknown session '{}'",
+                session.id,
             )
             return
 
-        self._storage.pop(managed_session.id)
+        del self._storage[session.id]
+
         logger.info(
-            "Session {} removed. Active sessions: {}",
-            managed_session.id,
+            "Removed session '{}', active sessions: {}",
+            session.id,
             len(self._storage),
         )
 
@@ -83,25 +87,26 @@ class SessionRegistry:
                 Уникальный идентификатор сессии.
 
         Returns:
-            Найденный объект управляемой сессии.
+            Контекст найденной сессии.
 
         Raises:
             KeyError:
-                Если сессия с указанным идентификатором отсутствует
-                в реестре.
+                Если сессия отсутствует в реестре.
         """
         session = self._storage.get(session_id)
+
         if session is None:
             logger.error(
-                "Session {} was not found in registry",
+                "Session '{}' not found",
                 session_id,
             )
             raise KeyError(f"Session '{session_id}' not found.")
 
         logger.debug(
-            "Session {} retrieved from registry",
+            "Retrieved session '{}'",
             session_id,
         )
+
         return session
 
     def all(self) -> list[SessionContext]:
@@ -112,7 +117,8 @@ class SessionRegistry:
             Список активных управляемых сессий.
         """
         logger.debug(
-            "Registry snapshot requested. Active sessions: {}",
+            "Retrieved {} active session(s)",
             len(self._storage),
         )
+
         return list(self._storage.values())

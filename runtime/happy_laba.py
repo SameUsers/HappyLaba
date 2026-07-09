@@ -23,17 +23,28 @@ class HappyLaba:
         self._channels: list[TCPChannel] = []
         self._tasks: dict[asyncio.Task, TCPChannel] = {}
 
+    def _start_channel(self, channel: TCPChannel) -> None:
+        """
+        Создает и регистрирует задачу обслуживания TCP-канала.
+        """
+        task = asyncio.create_task(
+            channel.start(),
+            name=f"channel-{channel.channel_type}",
+        )
+        self._tasks[task] = channel
+
     async def start(self) -> None:
-        logger.info("Starting HappyLaba runtime")
+        """
+        Запускает приложение и создает задачи обслуживания
+        для всех сконфигурированных TCP-каналов.
+        """
+        logger.info("Starting application runtime")
 
         self._channels = self._builder.build_app()
 
         for channel in self._channels:
-            task = asyncio.create_task(
-                channel.start(),
-                name=f"channel-{channel.channel_type}",
-            )
-            self._tasks[task] = channel
+            self._start_channel(channel)
+
         logger.info(
             "Started {} TCP channel(s)",
             len(self._channels),
@@ -41,10 +52,9 @@ class HappyLaba:
 
     async def wait(self) -> None:
         """
-        Непрерывно наблюдает за каналами и перезапускает их
-        при неожиданном завершении.
+        Непрерывно наблюдает за каналами и автоматически
+        перезапускает их при неожиданном завершении.
         """
-
         while self._tasks:
             done, _ = await asyncio.wait(
                 self._tasks.keys(),
@@ -58,7 +68,7 @@ class HappyLaba:
                     task.result()
 
                     logger.warning(
-                        "TCP channel '{}' stopped. Restarting...",
+                        "TCP channel '{}' stopped, restarting",
                         channel.channel_type,
                     )
 
@@ -71,30 +81,29 @@ class HappyLaba:
 
                 except Exception:
                     logger.exception(
-                        "TCP channel '{}' crashed. Restarting...",
+                        "TCP channel '{}' crashed, restarting",
                         channel.channel_type,
                     )
 
-                new_task = asyncio.create_task(
-                    channel.start(),
-                    name=f"channel-{channel.channel_type}",
-                )
-
-                self._tasks[new_task] = channel
+                self._start_channel(channel)
 
     async def shutdown(self) -> None:
         """
-        Корректно завершает работу всех каналов.
+        Корректно завершает работу всех TCP-каналов.
         """
+        logger.info("Stopping application runtime")
 
-        logger.info("Shutting down HappyLaba runtime")
         for task in self._tasks:
             task.cancel()
+
         await asyncio.gather(
             *self._tasks,
             return_exceptions=True,
         )
+
         for channel in self._channels:
             await channel.stop()
+
         self._tasks.clear()
-        logger.info("HappyLaba runtime stopped")
+
+        logger.info("Application runtime stopped")

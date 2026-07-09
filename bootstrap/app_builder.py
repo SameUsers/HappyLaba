@@ -12,13 +12,25 @@ from core.infrastructure.network.tcp.server import TCPChannel
 
 class AppBuilder:
     """
-    Loads application configuration, validates it and creates ready-to-use
-    TCP channels.
+    Загружает конфигурацию приложения, выполняет её валидацию
+    и создает готовые к использованию TCP-каналы.
     """
 
-    _used_ports: set[int] = set()
+    def __init__(self) -> None:
+        self._used_ports: set[int] = set()
 
     def _validate_channel(self, channel: DeviceConfig) -> None:
+        """
+        Выполняет валидацию конфигурации TCP-канала.
+
+        Проверяет:
+        - уникальность порта в конфигурации приложения;
+        - доступность порта в операционной системе.
+
+        Raises:
+            RuntimeError:
+                Если порт уже используется в конфигурации или недоступен.
+        """
         port = channel.device_channel.port
         host = channel.device_channel.host
 
@@ -32,6 +44,9 @@ class AppBuilder:
 
     @lru_cache(maxsize=1)
     def _create_session_manager(self) -> SessionManager:
+        """
+        Создает общий менеджер сессий приложения.
+        """
         logger.debug("Creating session registry")
 
         registry = SessionRegistry()
@@ -41,6 +56,13 @@ class AppBuilder:
         return SessionManager(registry=registry)
 
     def build_app(self) -> list[TCPChannel]:
+        """
+        Создает и инициализирует все TCP-каналы приложения
+        на основании конфигурации.
+
+        Returns:
+            Список готовых TCP-каналов.
+        """
         logger.info("Initializing application")
 
         logger.debug("Loading application configuration")

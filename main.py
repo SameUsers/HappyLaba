@@ -1,7 +1,15 @@
-from runtime.happy_laba import HappyLaba
 import asyncio
 
-async def main():
+from runtime.happy_laba import HappyLaba
+
+
+async def main() -> None:
+    """
+    Точка входа в приложение.
+
+    Запускает среду выполнения приложения и ожидает
+    завершения ее работы.
+    """
     app = HappyLaba()
 
     try:

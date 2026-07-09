@@ -2,11 +2,11 @@ import asyncio
 
 from loguru import logger
 
-from core.infrastructure.network.tcp.exception import SessionRemoteClose
-from core.infrastructure.network.tcp.session import TCPSession
 from core.application.sessions.session_context import SessionContext
 from core.application.sessions.session_registry import SessionRegistry
 from core.domain.devices_types import DevicesTypeEnum
+from core.infrastructure.network.tcp.exception import SessionRemoteClose
+from core.infrastructure.network.tcp.session import TCPSession
 
 
 class SessionManager:
@@ -29,119 +29,136 @@ class SessionManager:
 
         Args:
             registry:
-                Реестр активных сессий, используемый для хранения
-                и управления зарегистрированными сессиями.
+                Реестр активных сессий.
         """
         self._registry = registry
         self._lock = asyncio.Lock()
-        logger.debug("SessionManager initialized")
 
-    def on_connect(self, session: TCPSession, channel_type: DevicesTypeEnum) -> None:
+        logger.debug("Session manager initialized")
+
+    def _create_context(
+        self,
+        session: TCPSession,
+        channel_type: DevicesTypeEnum,
+    ) -> SessionContext:
+        """
+        Создает контекст управления TCP-сессией.
+        """
+        managed = SessionContext(
+            session=session,
+            channel_type=channel_type,
+        )
+
+        managed.task = asyncio.create_task(self._run(managed))
+
+        return managed
+
+    async def _shutdown_tasks(
+        self,
+        channel_type: DevicesTypeEnum,
+    ) -> list[asyncio.Task]:
+        """
+        Возвращает задачи активных сессий указанного TCP-канала.
+        """
+        async with self._lock:
+            return [
+                session.task
+                for session in self._registry.all()
+                if session.channel_type == channel_type and session.task is not None
+            ]
+
+    def on_connect(
+        self,
+        session: TCPSession,
+        channel_type: DevicesTypeEnum,
+    ) -> None:
         """
         Регистрирует новую TCP-сессию и запускает управление её жизненным циклом.
-
-        Создает объект ManagedSession, запускает фоновую задачу
-        для обработки сессии, сохраняет задачу в объекте ManagedSession
-        и добавляет полностью подготовленную сессию в реестр.
-
-        Args:
-            session:
-                Инициализированный объект TCP-сессии.
         """
         logger.info(
-            "New session accepted from {}:{}",
+            "Accepted session from {}:{}",
             session.host,
             session.port,
         )
 
-        managed = SessionContext(session=session, channel_type=channel_type)
+        managed = self._create_context(session, channel_type)
+
         self._registry.add(managed)
-        task = asyncio.create_task(self._run(managed))
-        managed.task = task
 
         logger.debug(
-            "Managed session {} registered",
+            "Registered session {}",
             managed.id,
         )
 
-        logger.debug(
-            "Background task created for session {}",
-            managed.id,
-        )
-
-    async def _run(self, managed: SessionContext) -> None:
+    async def _run(
+        self,
+        managed: SessionContext,
+    ) -> None:
         """
-        Управляет выполнением жизненного цикла сессии.
-
-        Запускает обработку сессии и гарантирует удаление завершенной
-        сессии из реестра независимо от причины завершения.
-
-        Args:
-            managed:
-                Полностью инициализированный объект управляемой сессии.
-
-        Raises:
-            asyncio.CancelledError:
-                Пробрасывается при отмене задачи во время завершения сервера.
+        Выполняет жизненный цикл зарегистрированной сессии.
         """
         logger.debug(
-            "Session {} processing started",
+            "Session {} started",
             managed.id,
         )
+
         try:
-            await managed.session.run(channel_type=managed.channel_type)
+            await managed.session.run(managed.channel_type)
+
         except SessionRemoteClose:
             logger.info(
                 "Session {} closed by remote peer",
                 managed.id,
             )
+
         except asyncio.CancelledError:
             logger.warning(
-                "Session {} cancelled during server shutdown",
+                "Session {} cancelled",
                 managed.id,
             )
             raise
+
         except Exception:
             logger.exception(
-                "Unhandled exception in session {}",
+                "Session {} crashed",
                 managed.id,
             )
 
         finally:
-            logger.debug(
-                "Removing session {} from registry",
-                managed.id,
-            )
             self._registry.delete(managed)
+
             logger.debug(
-                "Session {} cleanup completed",
+                "Removed session {}",
                 managed.id,
             )
 
-    async def shutdown(self, channel_type: DevicesTypeEnum) -> None:
+    async def shutdown(
+        self,
+        channel_type: DevicesTypeEnum,
+    ) -> None:
         """
-        Корректно завершает работу всех активных сессий.
-
-        Получает активные задачи из реестра сессий, отправляет каждой задаче
-        сигнал отмены и ожидает полного завершения их работы.
-
-        Отмена распространяется через жизненный цикл сессии и обрабатывается
-        соответствующими компонентами.
+        Корректно завершает работу всех активных сессий указанного TCP-канала.
         """
+        logger.info(
+            "Stopping sessions for channel '{}'",
+            channel_type,
+        )
 
-        logger.info("Session manager shutdown started")
-
-        async with self._lock:
-            sessions = self._registry.all()
-            tasks = [s.task for s in sessions if s.task if s.channel_type == channel_type]
+        tasks = await self._shutdown_tasks(channel_type)
 
         logger.info(
-            "Cancelling {} active session(s)",
+            "Cancelling {} session(s)",
             len(tasks),
         )
 
         for task in tasks:
             task.cancel()
-        await asyncio.gather(*tasks, return_exceptions=True)
 
-        logger.info("All session tasks have been stopped")
+        await asyncio.gather(
+            *tasks,
+            return_exceptions=True,
+        )
+        logger.info(
+            "Stopped sessions for channel '{}'",
+            channel_type,
+        )
