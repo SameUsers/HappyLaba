@@ -2,7 +2,9 @@ import asyncio
 
 from loguru import logger
 
-from core.config.tcp import TCPSessionConfig
+from core.components.framer import HL7Framer
+from core.config.tcp import DeviceSessionConfig
+from core.domain.devices_types import DevicesTypeEnum
 from core.infrastructure.network.tcp.exception import (
     InvalidPeerInfo,
     SessionRemoteClose,
@@ -27,31 +29,31 @@ class TCPSession:
         self,
         reader: asyncio.StreamReader,
         writer: asyncio.StreamWriter,
-        config: TCPSessionConfig,
+        config: DeviceSessionConfig,
+        framer: HL7Framer,
     ) -> None:
         """
         Инициализирует объект TCP-сессии поверх существующего соединения.
 
         Args:
             reader:
-                Объект asyncio StreamReader для чтения данных
-                из TCP-потока.
+                Объект asyncio StreamReader для чтения данных из TCP-потока.
 
             writer:
-                Объект asyncio StreamWriter для записи данных
-                в TCP-поток и получения информации о соединении.
+                Объект asyncio StreamWriter для записи данных в TCP-поток
+                и получения информации о соединении.
 
             config:
-                Конфигурация сессии, содержащая параметры
-                выполнения и обработки соединения.
+                Конфигурация сессии.
 
         Raises:
             InvalidPeerInfo:
-                Возникает, если невозможно получить информацию
+                Если невозможно получить информацию
                 об удаленной стороне соединения.
         """
         self._reader = reader
         self._writer = writer
+        self._framer = framer
         self._read_size = config.read_size
 
         peer = self._writer.get_extra_info("peername")
@@ -67,7 +69,7 @@ class TCPSession:
             self.port,
         )
 
-    async def run(self) -> None:
+    async def run(self, channel_type: DevicesTypeEnum) -> None:
         """
         Запускает основной цикл обработки TCP-соединения.
 
@@ -77,17 +79,6 @@ class TCPSession:
 
         Гарантирует освобождение ресурсов соединения после завершения
         работы сессии.
-
-        Raises:
-            asyncio.CancelledError:
-                Пробрасывается при запросе отмены задачи во время
-                завершения работы сервера.
-
-            SessionRemoteClose:
-                Пробрасывается при закрытии соединения удаленной стороной.
-
-            Exception:
-                Пробрасывается при необработанных ошибках обработки сессии.
         """
         logger.debug(
             "Session {}:{} started",
@@ -96,11 +87,11 @@ class TCPSession:
         )
 
         try:
-            await self._receive_loop()
+            await self._receive_loop(channel_type)
 
         except asyncio.CancelledError:
             logger.debug(
-                "Session {}:{} received cancellation request",
+                "Session {}:{} cancelled",
                 self.host,
                 self.port,
             )
@@ -121,49 +112,47 @@ class TCPSession:
                 self.port,
             )
             raise
+
         finally:
             await self._close()
 
-    async def _receive_loop(self) -> None:
+    async def _receive_loop(
+        self,
+        channel_type: DevicesTypeEnum,
+    ) -> None:
         """
         Выполняет цикл приема данных из TCP-потока.
 
         Ожидает входящие данные от удаленной стороны и обрабатывает
         их до момента закрытия соединения, отмены задачи или сброса
         соединения.
-
-        Raises:
-            asyncio.CancelledError:
-                Пробрасывается при отмене задачи во время завершения
-                работы сессии.
-
-            SessionRemoteClose:
-                Возникает при закрытии соединения удаленной стороной.
-
-            ConnectionResetError:
-                Возникает при принудительном сбросе соединения удаленной
-                стороной.
         """
         logger.debug(
             "Receive loop started for {}:{}",
             self.host,
             self.port,
         )
+
         try:
             while True:
                 chunk = await self._reader.read(self.read_size)
-                logger.warning(chunk)
+
                 if not chunk:
                     raise SessionRemoteClose
+
                 logger.trace(
-                    "Received {} bytes from {}:{}",
+                    "Received {} byte(s) from {}:{}",
                     len(chunk),
                     self.host,
                     self.port,
                 )
 
+                message = await self._framer.frame(chunk)
+                self._log_received_message(message, channel_type)
+
         except asyncio.CancelledError:
             raise
+
         except ConnectionResetError:
             logger.debug(
                 "Connection reset by peer {}:{}",
@@ -172,15 +161,29 @@ class TCPSession:
             )
             raise
 
+    def _log_received_message(
+        self,
+        message: str | None,
+        channel_type: DevicesTypeEnum,
+    ) -> None:
+        """
+        Выполняет логирование успешно собранного сообщения.
+        """
+        if message is None:
+            return
+
+        logger.debug(
+            "Received message from channel '{}': {}",
+            channel_type,
+            message,
+        )
+
     async def _close(self) -> None:
         """
         Корректно закрывает TCP-соединение и освобождает сетевые ресурсы.
 
-        Проверяет состояние соединения, инициирует закрытие writer
-        и ожидает полного завершения закрытия соединения.
-
-        Повторный вызов безопасен и не выполняет закрытие, если
-        соединение уже находится в процессе завершения.
+        Повторный вызов безопасен и не выполняет закрытие,
+        если соединение уже находится в процессе завершения.
         """
         if self._writer.is_closing():
             logger.trace(
@@ -189,6 +192,7 @@ class TCPSession:
                 self.port,
             )
             return
+
         logger.debug(
             "Closing session {}:{}",
             self.host,

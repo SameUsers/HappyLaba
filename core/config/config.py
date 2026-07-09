@@ -1,20 +1,37 @@
-from core.config.tcp import TCPConfig
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field
-from pathlib import Path
 from functools import lru_cache
+from pathlib import Path
+
+from pydantic import Field
+from pydantic_settings import SettingsConfigDict
+from pydantic_settings_yaml import YamlBaseSettings
+
+from core.config.tcp import DeviceConfig
 
 
-class AppConfig(BaseSettings):
-    tcp: TCPConfig = Field(default_factory=TCPConfig)
+_CONFIG_PATH = Path(__file__).resolve().parents[2] / "config.yaml"
+
+
+class AppConfig(YamlBaseSettings):
+    """
+    Корневая конфигурация приложения.
+
+    Загружает настройки из YAML-файла и предоставляет
+    конфигурацию всех TCP-каналов.
+    """
+
+    channel_config: list[DeviceConfig] = Field(default_factory=list)
+
     model_config = SettingsConfigDict(
-        env_file=Path(Path(__file__).resolve().parents[2] / ".env"),
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-        env_nested_delimiter="__",
+        yaml_file=_CONFIG_PATH,
     )
 
 
 @lru_cache(maxsize=1)
 def load_config() -> AppConfig:
+    """
+    Загружает и кэширует конфигурацию приложения.
+
+    Returns:
+        Валидированная конфигурация приложения.
+    """
     return AppConfig()

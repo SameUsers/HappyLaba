@@ -1,6 +1,6 @@
 import pytest
 from core.application.sessions.session_registry import SessionRegistry
-from core.application.sessions.managed_sessions import ManagedSession
+from core.application.sessions.session_context import SessionContext
 from tests.application.fake.fake_tcp_session import FakeTCPSession
 from core.application.sessions.session_manager import SessionManager
 
@@ -19,8 +19,8 @@ def fake_tcp_session() -> FakeTCPSession:
 
 
 @pytest.fixture
-def fake_session_context(fake_tcp_session) -> ManagedSession:
-    return ManagedSession(session=fake_tcp_session)
+def fake_session_context(fake_tcp_session) -> SessionContext:
+    return SessionContext(session=fake_tcp_session, channel_type='Utir5160')
 
 
 @pytest.fixture

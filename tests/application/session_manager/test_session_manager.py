@@ -8,7 +8,7 @@ from unittest.mock import (
 
 import pytest
 
-from core.application.sessions.managed_sessions import ManagedSession
+from core.application.sessions.session_context import SessionContext
 from core.application.sessions.session_manager import SessionManager
 from core.application.sessions.session_registry import SessionRegistry
 from core.infrastructure.network.tcp.session import TCPSession
@@ -28,7 +28,8 @@ class TestSessionManager:
         registry = create_autospec(SessionRegistry, instance=True)
         fake_session_manager._registry = registry
 
-        managed = MagicMock(spec=ManagedSession)
+        managed = MagicMock(spec=SessionContext)
+        managed.channel_type = 'Urit5160'
         task = MagicMock()
 
         fake_session_manager._run = AsyncMock()
@@ -39,7 +40,7 @@ class TestSessionManager:
 
         with (
             patch(
-                "core.application.sessions.session_manager.ManagedSession",
+                "core.application.sessions.session_manager.SessionContext",
                 return_value=managed,
             ) as managed_cls,
             patch(
@@ -47,13 +48,10 @@ class TestSessionManager:
                 side_effect=fake_create_task,
             ) as create_task,
         ):
-            fake_session_manager.on_connect(session)
-
-        managed_cls.assert_called_once_with(session=session)
+            fake_session_manager.on_connect(session, channel_type='Urit5160')
+        managed_cls.assert_called_once_with(session=session, channel_type='Urit5160')
         registry.add.assert_called_once_with(managed)
-
         fake_session_manager._run.assert_called_once_with(managed)
-
         create_task.assert_called_once()
         assert managed.task is task
 
@@ -62,7 +60,7 @@ class TestSessionManager:
         self,
         fake_session_manager: SessionManager,
     ) -> None:
-        managed = create_autospec(ManagedSession, instance=True)
+        managed = create_autospec(SessionContext, instance=True)
         session = create_autospec(TCPSession, instance=True)
         registry = create_autospec(SessionRegistry, instance=True)
 
@@ -81,7 +79,7 @@ class TestSessionManager:
         self,
         fake_session_manager: SessionManager,
     ) -> None:
-        managed = create_autospec(ManagedSession, instance=True)
+        managed = create_autospec(SessionContext, instance=True)
         session = create_autospec(TCPSession, instance=True)
         registry = create_autospec(SessionRegistry, instance=True)
 
@@ -103,6 +101,8 @@ class TestSessionManager:
     ) -> None:
         managed1 = MagicMock()
         managed2 = MagicMock()
+        managed1.channel_type='Urit5160'
+        managed2.channel_type='Urit5160'
 
         task1 = MagicMock()
         task2 = MagicMock()
@@ -119,7 +119,7 @@ class TestSessionManager:
             "core.application.sessions.session_manager.asyncio.gather",
             new_callable=AsyncMock,
         ) as gather_mock:
-            await fake_session_manager.shutdown()
+            await fake_session_manager.shutdown(channel_type='Urit5160')
 
         registry.all.assert_called_once_with()
 
@@ -137,10 +137,9 @@ class TestSessionManager:
         self,
         fake_session_manager: SessionManager,
     ) -> None:
-        managed = create_autospec(ManagedSession, instance=True)
+        managed = create_autospec(SessionContext, instance=True)
         session = create_autospec(TCPSession, instance=True)
         registry = create_autospec(SessionRegistry, instance=True)
-
         managed.session = session
         session.run = AsyncMock(side_effect=SessionRemoteClose())
 
@@ -156,7 +155,7 @@ class TestSessionManager:
         self,
         fake_session_manager: SessionManager,
     ) -> None:
-        managed = create_autospec(ManagedSession, instance=True)
+        managed = create_autospec(SessionContext, instance=True)
         session = create_autospec(TCPSession, instance=True)
         registry = create_autospec(SessionRegistry, instance=True)
         managed.session = session
@@ -166,13 +165,15 @@ class TestSessionManager:
         session.run.assert_awaited_once()
         registry.delete.assert_called_once_with(managed)
 
-        @pytest.mark.asyncio
-        async def test_shutdown_skips_sessions_without_tasks(
+    @pytest.mark.asyncio
+    async def test_shutdown_skips_sessions_without_tasks(
             self,
             fake_session_manager: SessionManager,
         ) -> None:
             managed_with_task = MagicMock()
             managed_without_task = MagicMock()
+            managed_without_task.channel_type = 'Urit5160'
+            managed_with_task.channel_type = 'Urit5160'
 
             task = MagicMock()
 
@@ -191,7 +192,7 @@ class TestSessionManager:
                 "core.application.sessions.session_manager.asyncio.gather",
                 new_callable=AsyncMock,
             ) as gather_mock:
-                await fake_session_manager.shutdown()
+                await fake_session_manager.shutdown(channel_type='Urit5160')
 
             registry.all.assert_called_once_with()
 

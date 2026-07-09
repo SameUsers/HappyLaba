@@ -1,13 +1,22 @@
 import asyncio
-from bootstrap import AppBuilder
+
+from runtime.happy_laba import HappyLaba
 
 
-async def main():
-    server = AppBuilder.build_app()
+async def main() -> None:
+    """
+    Точка входа в приложение.
+
+    Запускает среду выполнения приложения и ожидает
+    завершения ее работы.
+    """
+    app = HappyLaba()
+
     try:
-        await server.start()
-    except (KeyboardInterrupt, asyncio.CancelledError):
-        await server.stop()
+        await app.start()
+        await app.wait()
+    finally:
+        await app.shutdown()
 
 
 if __name__ == "__main__":

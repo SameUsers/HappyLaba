@@ -1,0 +1,22 @@
+channel_config:
+
+  - device_type: Urit5160 
+    device_channel:
+      host: 0.0.0.0
+      port: 8000
+    device_session:
+      read_size: 4096
+
+  - device_type: AccentyM320 
+    device_channel:
+      host: 0.0.0.0
+      port: 8001
+    device_session:
+      read_size: 4096
+
+  - device_type: SematySMT120 
+    device_channel:
+      host: 0.0.0.0
+      port: 8002
+    device_session:
+      read_size: 4096
