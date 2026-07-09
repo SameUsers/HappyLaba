@@ -47,9 +47,9 @@ class TestSessionManager:
                 side_effect=fake_create_task,
             ) as create_task,
         ):
-            fake_session_manager.on_connect(session)
+            fake_session_manager.on_connect(session, device_type='Urit5160')
 
-        managed_cls.assert_called_once_with(session=session)
+        managed_cls.assert_called_once_with(session=session, device_type='Urit5160')
         registry.add.assert_called_once_with(managed)
 
         fake_session_manager._run.assert_called_once_with(managed)
@@ -103,6 +103,8 @@ class TestSessionManager:
     ) -> None:
         managed1 = MagicMock()
         managed2 = MagicMock()
+        managed1.device_type='Urit5160'
+        managed2.device_type='Urit5160'
 
         task1 = MagicMock()
         task2 = MagicMock()
@@ -119,7 +121,7 @@ class TestSessionManager:
             "core.application.sessions.session_manager.asyncio.gather",
             new_callable=AsyncMock,
         ) as gather_mock:
-            await fake_session_manager.shutdown()
+            await fake_session_manager.shutdown(device_type='Urit5160')
 
         registry.all.assert_called_once_with()
 

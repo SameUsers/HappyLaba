@@ -20,7 +20,7 @@ def fake_tcp_session() -> FakeTCPSession:
 
 @pytest.fixture
 def fake_session_context(fake_tcp_session) -> ManagedSession:
-    return ManagedSession(session=fake_tcp_session)
+    return ManagedSession(session=fake_tcp_session, device_type='Utir5160')
 
 
 @pytest.fixture
