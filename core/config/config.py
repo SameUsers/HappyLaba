@@ -7,7 +7,6 @@ from pydantic_settings_yaml import YamlBaseSettings
 
 from core.config.tcp import DeviceConfig
 
-
 _CONFIG_PATH = Path(__file__).resolve().parents[2] / "config.yaml"
 
 

@@ -69,7 +69,7 @@ class HL7Framer:
             logger.debug("Received complete MLLP message")
 
             return MLLPMessage(
-                message=data[start + len(self.START_BYTES):end],
+                message=data[start + len(self.START_BYTES) : end],
             )
 
         if start != -1:
@@ -99,7 +99,7 @@ class HL7Framer:
         self._reset()
 
         self._state = FramerState.RECEIVING
-        self._buffer.extend(data[start + len(self.START_BYTES):])
+        self._buffer.extend(data[start + len(self.START_BYTES) :])
 
         self._timer_task = asyncio.create_task(self._timeout())
 
