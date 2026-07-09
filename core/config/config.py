@@ -1,17 +1,15 @@
-from core.config.tcp import TCPConfig
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from core.config.tcp import DeviceConfig
+from pydantic_settings import SettingsConfigDict
+from pydantic_settings_yaml import YamlBaseSettings
 from pydantic import Field
 from pathlib import Path
 from functools import lru_cache
 
 
-class AppConfig(BaseSettings):
-    tcp: TCPConfig = Field(default_factory=TCPConfig)
+class AppConfig(YamlBaseSettings):
+    devices_config: list[DeviceConfig] = Field(default_factory=DeviceConfig)
     model_config = SettingsConfigDict(
-        env_file=Path(Path(__file__).resolve().parents[2] / ".env"),
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-        env_nested_delimiter="__",
+        yaml_file=Path(Path(__file__).resolve().parents[2] / "config.yaml"),
     )
 
 

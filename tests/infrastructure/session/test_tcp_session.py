@@ -37,6 +37,7 @@ class TestTCPSession:
         peer,
     ) -> None:
         reader = AsyncMock()
+        framer = MagicMock()
 
         writer = MagicMock()
         writer.get_extra_info.return_value = peer
@@ -45,7 +46,7 @@ class TestTCPSession:
         config.read_size = 4096
 
         with pytest.raises(InvalidPeerInfo):
-            TCPSession(reader, writer, config)
+            TCPSession(framer, reader, writer, config)
 
     @pytest.mark.asyncio
     async def test_should_run_receive_loop_and_close_session(
@@ -55,7 +56,7 @@ class TestTCPSession:
         session._receive_loop = AsyncMock()
         session._close = AsyncMock()
 
-        await session.run()
+        await session.run(channel_type='Urit5160')
 
         session._receive_loop.assert_awaited_once()
         session._close.assert_awaited_once()
@@ -65,11 +66,12 @@ class TestTCPSession:
         self,
         session: TCPSession,
     ) -> None:
+        managed = MagicMock()
         session._receive_loop = AsyncMock(side_effect=asyncio.CancelledError())
         session._close = AsyncMock()
 
         with pytest.raises(asyncio.CancelledError):
-            await session.run()
+            await session.run(managed)
 
         session._close.assert_awaited_once()
 
@@ -80,9 +82,10 @@ class TestTCPSession:
     ) -> None:
         session._receive_loop = AsyncMock(side_effect=SessionRemoteClose())
         session._close = AsyncMock()
-
+        managed = MagicMock()
+        managed.channel_type = 'Urit5160'
         with pytest.raises(SessionRemoteClose):
-            await session.run()
+            await session.run(channel_type=managed.channel_type)
 
         session._close.assert_awaited_once()
 
@@ -93,9 +96,10 @@ class TestTCPSession:
     ) -> None:
         session._receive_loop = AsyncMock(side_effect=RuntimeError())
         session._close = AsyncMock()
-
+        managed = MagicMock()
+        managed.channel_type = 'Urit5160'
         with pytest.raises(RuntimeError):
-            await session.run()
+            await session.run(channel_type=managed.channel_type)
 
         session._close.assert_awaited_once()
 
@@ -107,7 +111,7 @@ class TestTCPSession:
         session._reader.read = AsyncMock(return_value=b"")
 
         with pytest.raises(SessionRemoteClose):
-            await session._receive_loop()
+            await session._receive_loop(channel_type='Urit5160')
 
         session._reader.read.assert_awaited_once_with(session.read_size)
 
@@ -119,7 +123,7 @@ class TestTCPSession:
         session._reader.read = AsyncMock(side_effect=ConnectionResetError())
 
         with pytest.raises(ConnectionResetError):
-            await session._receive_loop()
+            await session._receive_loop(channel_type='Urit5160')
 
     @pytest.mark.asyncio
     async def test_should_reraise_cancelled_error_from_receive_loop(
@@ -129,7 +133,7 @@ class TestTCPSession:
         session._reader.read = AsyncMock(side_effect=asyncio.CancelledError())
 
         with pytest.raises(asyncio.CancelledError):
-            await session._receive_loop()
+            await session._receive_loop(channel_type='Urit5160')
 
     @pytest.mark.asyncio
     async def test_should_close_writer_when_connection_is_open(

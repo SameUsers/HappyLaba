@@ -1,8 +1,9 @@
 import asyncio
 
 from loguru import logger
-
-from core.config.tcp import TCPSessionConfig
+from core.components.framer import HL7Framer
+from core.domain.devices_types import DevicesTypeEnum
+from core.config.tcp import DeviceSessionConfig
 from core.infrastructure.network.tcp.exception import (
     InvalidPeerInfo,
     SessionRemoteClose,
@@ -27,7 +28,8 @@ class TCPSession:
         self,
         reader: asyncio.StreamReader,
         writer: asyncio.StreamWriter,
-        config: TCPSessionConfig,
+        config: DeviceSessionConfig,
+        framer: HL7Framer,
     ) -> None:
         """
         Инициализирует объект TCP-сессии поверх существующего соединения.
@@ -52,6 +54,7 @@ class TCPSession:
         """
         self._reader = reader
         self._writer = writer
+        self._framer = framer
         self._read_size = config.read_size
 
         peer = self._writer.get_extra_info("peername")
@@ -67,7 +70,7 @@ class TCPSession:
             self.port,
         )
 
-    async def run(self) -> None:
+    async def run(self, channel_type: DevicesTypeEnum) -> None:
         """
         Запускает основной цикл обработки TCP-соединения.
 
@@ -96,7 +99,7 @@ class TCPSession:
         )
 
         try:
-            await self._receive_loop()
+            await self._receive_loop(channel_type=channel_type)
 
         except asyncio.CancelledError:
             logger.debug(
@@ -124,7 +127,7 @@ class TCPSession:
         finally:
             await self._close()
 
-    async def _receive_loop(self) -> None:
+    async def _receive_loop(self, channel_type: DevicesTypeEnum) -> None:
         """
         Выполняет цикл приема данных из TCP-потока.
 
@@ -152,9 +155,11 @@ class TCPSession:
         try:
             while True:
                 chunk = await self._reader.read(self.read_size)
-                logger.warning(chunk)
                 if not chunk:
                     raise SessionRemoteClose
+                message = await self._framer.frame(chunk)
+                if message:
+                    logger.debug("Recieved message {} from {}", message, channel_type)
                 logger.trace(
                     "Received {} bytes from {}:{}",
                     len(chunk),

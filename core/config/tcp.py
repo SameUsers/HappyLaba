@@ -1,15 +1,17 @@
 from pydantic import BaseModel, Field
+from core.domain.devices_types import DevicesTypeEnum
 
 
-class TCPServerConfig(BaseModel):
+class DeviceChannelConfig(BaseModel):
     host: str = "127.0.0.1"
     port: int = 5000
 
 
-class TCPSessionConfig(BaseModel):
+class DeviceSessionConfig(BaseModel):
     read_size: int = 1024
 
 
-class TCPConfig(BaseModel):
-    server: TCPServerConfig = Field(default_factory=TCPServerConfig)
-    session: TCPSessionConfig = Field(default_factory=TCPSessionConfig)
+class DeviceConfig(BaseModel):
+    device_type: DevicesTypeEnum
+    device_channel: DeviceChannelConfig = Field(default_factory=DeviceChannelConfig)
+    device_session: DeviceSessionConfig = Field(default_factory=DeviceSessionConfig)

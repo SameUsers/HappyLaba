@@ -1,6 +1,6 @@
 [project]
 name = "HappyLaba"
-version = "0.0.2"
+version = "0.0.3"
 description = "Open-source asynchronous TCP server for laboratory analyzers."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -9,6 +9,7 @@ dependencies = [
     "loguru>=0.7.3",
     "pydantic>=2.13.4",
     "pydantic-settings>=2.14.2",
+    "pydantic-settings-yaml>=0.2.0",
 ]
 
 [build-system]

@@ -4,8 +4,9 @@ from loguru import logger
 
 from core.infrastructure.network.tcp.exception import SessionRemoteClose
 from core.infrastructure.network.tcp.session import TCPSession
-from core.application.sessions.managed_sessions import ManagedSession
+from core.application.sessions.session_context import SessionContext
 from core.application.sessions.session_registry import SessionRegistry
+from core.domain.devices_types import DevicesTypeEnum
 
 
 class SessionManager:
@@ -35,7 +36,7 @@ class SessionManager:
         self._lock = asyncio.Lock()
         logger.debug("SessionManager initialized")
 
-    def on_connect(self, session: TCPSession) -> None:
+    def on_connect(self, session: TCPSession, channel_type: DevicesTypeEnum) -> None:
         """
         Регистрирует новую TCP-сессию и запускает управление её жизненным циклом.
 
@@ -53,7 +54,7 @@ class SessionManager:
             session.port,
         )
 
-        managed = ManagedSession(session=session)
+        managed = SessionContext(session=session, channel_type=channel_type)
         self._registry.add(managed)
         task = asyncio.create_task(self._run(managed))
         managed.task = task
@@ -68,7 +69,7 @@ class SessionManager:
             managed.id,
         )
 
-    async def _run(self, managed: ManagedSession) -> None:
+    async def _run(self, managed: SessionContext) -> None:
         """
         Управляет выполнением жизненного цикла сессии.
 
@@ -88,7 +89,7 @@ class SessionManager:
             managed.id,
         )
         try:
-            await managed.session.run()
+            await managed.session.run(channel_type=managed.channel_type)
         except SessionRemoteClose:
             logger.info(
                 "Session {} closed by remote peer",
@@ -117,7 +118,7 @@ class SessionManager:
                 managed.id,
             )
 
-    async def shutdown(self) -> None:
+    async def shutdown(self, channel_type: DevicesTypeEnum) -> None:
         """
         Корректно завершает работу всех активных сессий.
 
@@ -132,7 +133,7 @@ class SessionManager:
 
         async with self._lock:
             sessions = self._registry.all()
-            tasks = [s.task for s in sessions if s.task]
+            tasks = [s.task for s in sessions if s.task if s.channel_type == channel_type]
 
         logger.info(
             "Cancelling {} active session(s)",
