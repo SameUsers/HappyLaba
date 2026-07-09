@@ -1,12 +1,12 @@
 import pytest
 from core.application.sessions.session_registry import SessionRegistry
-from core.application.sessions.session_manager import ManagedSession
+from core.application.sessions.session_manager import SessionContext
 
 
 class TestSessionRegistry:
 
     def test_add_session_registers_and_can_be_retrieved(
-        self, session_registry: SessionRegistry, fake_session_context: ManagedSession
+        self, session_registry: SessionRegistry, fake_session_context: SessionContext
     ) -> None:
 
         session_registry.add(fake_session_context)
@@ -21,7 +21,7 @@ class TestSessionRegistry:
         )
 
     def test_delete_session_removes_it_from_registry(
-        self, session_registry: SessionRegistry, fake_session_context: ManagedSession
+        self, session_registry: SessionRegistry, fake_session_context: SessionContext
     ) -> None:
 
         session_registry.add(fake_session_context)
@@ -31,7 +31,7 @@ class TestSessionRegistry:
         assert len(session_registry.all()) == 0
 
     def test_adding_duplicate_session_raises_error(
-        self, session_registry: SessionRegistry, fake_session_context: ManagedSession
+        self, session_registry: SessionRegistry, fake_session_context: SessionContext
     ) -> None:
 
         session_registry.add(fake_session_context)
@@ -40,14 +40,14 @@ class TestSessionRegistry:
         assert len(session_registry.all()) == 1
 
     def test_deleting_unknown_session_is_safe_noop(
-        self, session_registry: SessionRegistry, fake_session_context: ManagedSession
+        self, session_registry: SessionRegistry, fake_session_context: SessionContext
     ) -> None:
 
         session_registry.delete(fake_session_context)
         assert len(session_registry.all()) == 0
 
     def test_registry_remains_consistent_across_multiple_operations(
-        self, session_registry: SessionRegistry, fake_session_context: ManagedSession
+        self, session_registry: SessionRegistry, fake_session_context: SessionContext
     ) -> None:
 
         session_registry.add(fake_session_context)

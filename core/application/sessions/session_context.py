@@ -6,7 +6,7 @@ from core.common.generate_id import generate_uuid
 
 
 @dataclass(slots=True)
-class ManagedSession:
+class SessionContext:
     """
     Представляет TCP-сессию, управляемую SessionManager.
 
@@ -26,7 +26,7 @@ class ManagedSession:
             Уникальный идентификатор управляемой сессии.
     """
 
-    device_type: DevicesTypeEnum
+    channel_type: DevicesTypeEnum
     session: TCPSession
     task: asyncio.Task | None = None
     id: str = field(default_factory=generate_uuid)

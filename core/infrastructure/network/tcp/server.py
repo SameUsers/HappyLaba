@@ -88,18 +88,43 @@ class TCPServer:
         async with self._lock:
             if self._server is not None:
                 raise RuntimeError("TCP channel already running.")
-            self._server = await asyncio.start_server(
-                self._handle_connection,
-                host=self.host,
-                port=self.port,
-            )
+            try:
+                self._server = await asyncio.start_server(
+                    self._handle_connection,
+                    host=self.host,
+                    port=self.port,
+                )
+            except OSError as exc:
+                logger.error(
+                    "Failed to start TCP channel '{}' on {}:{} - {}",
+                    self._channel_type,
+                    self.host,
+                    self.port,
+                    exc,
+                )
+                raise
+
         logger.info(
             "TCP channel '{}' started on {}:{}",
             self._channel_type,
             self.host,
             self.port,
         )
-        await self._server.serve_forever()
+        try:
+            await self._server.serve_forever()
+        except asyncio.CancelledError:
+            logger.debug(
+                "TCP channel '{}' task cancelled",
+                self._channel_type,
+            )
+            raise
+        except Exception as exc:
+            logger.error(
+                "TCP channel '{}' stopped unexpectedly: {}",
+                self._channel_type,
+                exc,
+            )
+            raise
 
     async def stop(self) -> None:
         """
@@ -128,7 +153,7 @@ class TCPServer:
         )
         wait_task = asyncio.create_task(server.wait_closed())
         shutdown_task = asyncio.create_task(
-            self._session_manager.shutdown(device_type=self._channel_type)
+            self._session_manager.shutdown(channel_type=self._channel_type)
         )
         logger.debug(
             "Waiting for TCP channel '{}' and session manager shutdown",
