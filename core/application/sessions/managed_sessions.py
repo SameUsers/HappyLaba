@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 import asyncio
 from core.infrastructure.network.tcp.session import TCPSession
+from core.domain.devices_types import DevicesTypeEnum
 from core.common.generate_id import generate_uuid
 
 
@@ -24,7 +25,8 @@ class ManagedSession:
         id:
             Уникальный идентификатор управляемой сессии.
     """
-
+    device_type: DevicesTypeEnum
     session: TCPSession
     task: asyncio.Task | None = None
     id: str = field(default_factory=generate_uuid)
+    

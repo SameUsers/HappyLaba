@@ -37,6 +37,7 @@ class TestTCPSession:
         peer,
     ) -> None:
         reader = AsyncMock()
+        framer = MagicMock()
 
         writer = MagicMock()
         writer.get_extra_info.return_value = peer
@@ -45,7 +46,7 @@ class TestTCPSession:
         config.read_size = 4096
 
         with pytest.raises(InvalidPeerInfo):
-            TCPSession(reader, writer, config)
+            TCPSession(framer, reader, writer, config)
 
     @pytest.mark.asyncio
     async def test_should_run_receive_loop_and_close_session(

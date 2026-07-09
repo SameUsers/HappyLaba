@@ -6,6 +6,7 @@ from core.infrastructure.network.tcp.exception import SessionRemoteClose
 from core.infrastructure.network.tcp.session import TCPSession
 from core.application.sessions.managed_sessions import ManagedSession
 from core.application.sessions.session_registry import SessionRegistry
+from core.domain.devices_types import DevicesTypeEnum
 
 
 class SessionManager:
@@ -35,7 +36,7 @@ class SessionManager:
         self._lock = asyncio.Lock()
         logger.debug("SessionManager initialized")
 
-    def on_connect(self, session: TCPSession) -> None:
+    def on_connect(self, session: TCPSession, device_type: DevicesTypeEnum) -> None:
         """
         Регистрирует новую TCP-сессию и запускает управление её жизненным циклом.
 
@@ -53,7 +54,7 @@ class SessionManager:
             session.port,
         )
 
-        managed = ManagedSession(session=session)
+        managed = ManagedSession(session=session, device_type=device_type)
         self._registry.add(managed)
         task = asyncio.create_task(self._run(managed))
         managed.task = task
@@ -117,7 +118,7 @@ class SessionManager:
                 managed.id,
             )
 
-    async def shutdown(self) -> None:
+    async def shutdown(self, device_type: DevicesTypeEnum) -> None:
         """
         Корректно завершает работу всех активных сессий.
 
@@ -132,7 +133,7 @@ class SessionManager:
 
         async with self._lock:
             sessions = self._registry.all()
-            tasks = [s.task for s in sessions if s.task]
+            tasks = [s.task for s in sessions if s.task if s.device_type == device_type]
 
         logger.info(
             "Cancelling {} active session(s)",

@@ -1,6 +1,6 @@
 from core.infrastructure import TCPServer, TCPSession
 from core.application import SessionManager, SessionRegistry
-from core.config import AppConfig, TCPConfig, TCPServerConfig, TCPSessionConfig
+from core.config import AppConfig, DeviceConfig, DeviceChannelConfig, DeviceSessionConfig
 
 __all__ = [
     "TCPServer",
@@ -8,7 +8,7 @@ __all__ = [
     "SessionManager",
     "SessionRegistry",
     "AppConfig",
-    "TCPConfig",
-    "TCPServerConfig",
-    "TCPSessionConfig",
+    "DeviceConfig",
+    "DeviceChannelConfig",
+    "DeviceSessionConfig",
 ]

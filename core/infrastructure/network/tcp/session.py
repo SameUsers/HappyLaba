@@ -2,7 +2,7 @@ import asyncio
 
 from loguru import logger
 from core.components.framer import HL7Framer
-from core.config.tcp import TCPSessionConfig
+from core.config.tcp import DeviceSessionConfig
 from core.infrastructure.network.tcp.exception import (
     InvalidPeerInfo,
     SessionRemoteClose,
@@ -27,7 +27,7 @@ class TCPSession:
         self,
         reader: asyncio.StreamReader,
         writer: asyncio.StreamWriter,
-        config: TCPSessionConfig,
+        config: DeviceSessionConfig,
         framer: HL7Framer,
     ) -> None:
         """
