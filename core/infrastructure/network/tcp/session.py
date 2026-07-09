@@ -1,7 +1,7 @@
 import asyncio
 
 from loguru import logger
-
+from core.components.framer import HL7Framer
 from core.config.tcp import TCPSessionConfig
 from core.infrastructure.network.tcp.exception import (
     InvalidPeerInfo,
@@ -28,6 +28,7 @@ class TCPSession:
         reader: asyncio.StreamReader,
         writer: asyncio.StreamWriter,
         config: TCPSessionConfig,
+        framer: HL7Framer,
     ) -> None:
         """
         Инициализирует объект TCP-сессии поверх существующего соединения.
@@ -52,6 +53,7 @@ class TCPSession:
         """
         self._reader = reader
         self._writer = writer
+        self._framer = framer
         self._read_size = config.read_size
 
         peer = self._writer.get_extra_info("peername")
@@ -152,9 +154,11 @@ class TCPSession:
         try:
             while True:
                 chunk = await self._reader.read(self.read_size)
-                logger.warning(chunk)
                 if not chunk:
                     raise SessionRemoteClose
+                message = await self._framer.frame(chunk)
+                if message:
+                    logger.debug('Recieved message {}', message)
                 logger.trace(
                     "Received {} bytes from {}:{}",
                     len(chunk),
